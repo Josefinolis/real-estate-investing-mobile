@@ -1,5 +1,9 @@
 class AppConfig {
-  static const String apiBaseUrl = 'http://10.0.2.2:8080/api'; // Android emulator
+  // Production server
+  static const String apiBaseUrl = 'http://195.20.235.94:8081/api';
+
+  // Development URLs (uncomment as needed)
+  // static const String apiBaseUrl = 'http://10.0.2.2:8080/api'; // Android emulator
   // static const String apiBaseUrl = 'http://localhost:8080/api'; // iOS simulator
 
   static const int defaultPageSize = 20;
