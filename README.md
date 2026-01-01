@@ -224,19 +224,36 @@ FavoriteOperationSuccess(message, favorites)
 FavoriteError(message)
 ```
 
+## Descargar APK
+
+La app está disponible para descargar desde GitHub Releases:
+
+**[Descargar última versión](https://github.com/Josefinolis/real-estate-investing-mobile/releases/latest)**
+
+### Instalación
+1. Descarga `app-debug.apk` o `app-release.apk`
+2. En tu Android, activa "Instalar desde fuentes desconocidas"
+3. Abre el archivo APK para instalar
+
+## Backend
+
+La app se conecta al servidor de producción:
+- **API URL:** `http://195.20.235.94:8081/api`
+- **Repositorio:** [real-estate-investing-backend](https://github.com/Josefinolis/real-estate-investing-backend)
+
 ## Configuración
 
 ### app_config.dart
 ```dart
 class AppConfig {
-  // Emulador Android
-  static const String apiBaseUrl = 'http://10.0.2.2:8080/api';
+  // Servidor de producción (por defecto)
+  static const String apiBaseUrl = 'http://195.20.235.94:8081/api';
 
-  // Simulador iOS
+  // Desarrollo - Emulador Android
+  // static const String apiBaseUrl = 'http://10.0.2.2:8080/api';
+
+  // Desarrollo - Simulador iOS
   // static const String apiBaseUrl = 'http://localhost:8080/api';
-
-  // Dispositivo físico (cambiar IP)
-  // static const String apiBaseUrl = 'http://192.168.1.XXX:8080/api';
 
   static const int defaultPageSize = 20;
   static const Duration connectionTimeout = Duration(seconds: 30);
@@ -368,6 +385,25 @@ El servicio de notificaciones maneja:
   "newPrice": "195000"
 }
 ```
+
+## Releases y CI/CD
+
+El proyecto usa GitHub Actions para builds automáticos:
+
+### Crear nueva release
+```bash
+# Crear y subir tag
+git tag -a v1.0.1 -m "Descripción de la versión"
+git push origin v1.0.1
+```
+
+También puedes disparar manualmente desde GitHub Actions > "Build and Release APK" > "Run workflow".
+
+### Workflow
+El workflow `.github/workflows/release.yml`:
+1. Compila APKs (debug y release)
+2. Crea una GitHub Release
+3. Adjunta los APKs para descargar
 
 ## Mejoras Futuras
 
