@@ -240,6 +240,7 @@ La app está disponible para descargar desde GitHub Releases:
 La app se conecta al servidor de producción:
 - **API URL:** `http://195.20.235.94:8081/api`
 - **Repositorio:** [real-estate-investing-backend](https://github.com/Josefinolis/real-estate-investing-backend)
+- **Infrastructure:** https://github.com/Josefinolis/documentation
 
 ## Configuración
 
