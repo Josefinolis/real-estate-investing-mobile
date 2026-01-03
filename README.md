@@ -42,7 +42,7 @@ flutter build apk --release
 
 ## Backend
 
-- **API:** http://195.20.235.94:8081/api
+- **API:** http://195.20.235.94/realstate/api
 - **Repo:** [real-estate-investing-backend](https://github.com/Josefinolis/real-estate-investing-backend)
 
 ## Releases
