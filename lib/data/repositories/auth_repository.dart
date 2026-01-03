@@ -43,6 +43,7 @@ class AuthRepository {
     _isDemoMode = true;
     _demoUser = User(
       id: 'demo-user',
+      firebaseUid: 'demo-firebase-uid',
       email: 'demo@example.com',
       createdAt: DateTime.now(),
     );
@@ -74,6 +75,7 @@ class AuthRepository {
       // If backend is not available, return demo user
       return User(
         id: credential.user!.uid,
+        firebaseUid: credential.user!.uid,
         email: credential.user!.email!,
         createdAt: DateTime.now(),
       );
@@ -104,6 +106,7 @@ class AuthRepository {
       // If backend is not available, return demo user
       return User(
         id: credential.user!.uid,
+        firebaseUid: credential.user!.uid,
         email: credential.user!.email!,
         createdAt: DateTime.now(),
       );
@@ -145,6 +148,7 @@ class AuthRepository {
       final firebaseUser = currentUser;
       return User(
         id: firebaseUser?.uid ?? 'demo-user',
+        firebaseUid: firebaseUser?.uid ?? 'demo-firebase-uid',
         email: firebaseUser?.email ?? 'demo@example.com',
         createdAt: DateTime.now(),
       );
