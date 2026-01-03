@@ -37,6 +37,8 @@ class AuthSignUpRequested extends AuthEvent {
 
 class AuthSignOutRequested extends AuthEvent {}
 
+class AuthDemoModeRequested extends AuthEvent {}
+
 // States
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -51,14 +53,22 @@ class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
   final User user;
+  final bool isDemoMode;
 
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated(this.user, {this.isDemoMode = false});
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, isDemoMode];
 }
 
-class AuthUnauthenticated extends AuthState {}
+class AuthUnauthenticated extends AuthState {
+  final bool firebaseAvailable;
+
+  const AuthUnauthenticated({this.firebaseAvailable = true});
+
+  @override
+  List<Object?> get props => [firebaseAvailable];
+}
 
 class AuthError extends AuthState {
   final String message;
@@ -73,11 +83,13 @@ class AuthError extends AuthState {
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   final NotificationService _notificationService;
+  final bool firebaseAvailable;
   StreamSubscription? _authSubscription;
 
   AuthBloc({
     required AuthRepository authRepository,
     required NotificationService notificationService,
+    this.firebaseAvailable = true,
   })  : _authRepository = authRepository,
         _notificationService = notificationService,
         super(AuthInitial()) {
@@ -85,9 +97,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignUpRequested>(_onSignUpRequested);
     on<AuthSignOutRequested>(_onSignOutRequested);
+    on<AuthDemoModeRequested>(_onDemoModeRequested);
 
     _authSubscription = _authRepository.authStateChanges.listen((firebaseUser) {
-      if (firebaseUser == null) {
+      if (firebaseUser == null && !_authRepository.isDemoMode) {
         add(AuthCheckRequested());
       }
     });
@@ -97,10 +110,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
+    // If already in demo mode, stay authenticated
+    if (_authRepository.isDemoMode) {
+      try {
+        final user = await _authRepository.getCurrentUser();
+        emit(AuthAuthenticated(user, isDemoMode: true));
+      } catch (e) {
+        emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
+      }
+      return;
+    }
+
+    // If Firebase is not available, go to unauthenticated state
+    // User can choose to enter demo mode
+    if (!firebaseAvailable) {
+      emit(AuthUnauthenticated(firebaseAvailable: false));
+      return;
+    }
+
     final firebaseUser = _authRepository.currentUser;
 
     if (firebaseUser == null) {
-      emit(AuthUnauthenticated());
+      emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
       return;
     }
 
@@ -109,7 +140,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _updateFcmToken();
       emit(AuthAuthenticated(user));
     } catch (e) {
-      emit(AuthUnauthenticated());
+      emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
     }
   }
 
@@ -125,7 +156,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       await _updateFcmToken();
-      emit(AuthAuthenticated(user));
+      emit(AuthAuthenticated(user, isDemoMode: _authRepository.isDemoMode));
     } catch (e) {
       emit(AuthError(_mapAuthError(e)));
     }
@@ -143,7 +174,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       await _updateFcmToken();
-      emit(AuthAuthenticated(user));
+      emit(AuthAuthenticated(user, isDemoMode: _authRepository.isDemoMode));
     } catch (e) {
       emit(AuthError(_mapAuthError(e)));
     }
@@ -154,13 +185,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     await _authRepository.signOut();
-    emit(AuthUnauthenticated());
+    emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
+  }
+
+  Future<void> _onDemoModeRequested(
+    AuthDemoModeRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+
+    try {
+      final user = await _authRepository.enterDemoMode();
+      emit(AuthAuthenticated(user, isDemoMode: true));
+    } catch (e) {
+      emit(AuthError('Error al entrar en modo demo'));
+    }
   }
 
   Future<void> _updateFcmToken() async {
-    final token = _notificationService.fcmToken;
-    if (token != null) {
-      await _authRepository.updateFcmToken(token);
+    try {
+      final token = _notificationService.fcmToken;
+      if (token != null) {
+        await _authRepository.updateFcmToken(token);
+      }
+    } catch (e) {
+      // Ignore FCM token update failures
     }
   }
 
@@ -176,6 +225,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return 'La contraseña es muy débil';
     } else if (errorString.contains('invalid-email')) {
       return 'Email inválido';
+    } else if (errorString.contains('network')) {
+      return 'Error de conexión. Verifica tu internet.';
     }
     return 'Error de autenticación';
   }

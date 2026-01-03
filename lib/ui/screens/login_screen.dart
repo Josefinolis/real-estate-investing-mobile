@@ -40,6 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _enterDemoMode() {
+    context.read<AuthBloc>().add(AuthDemoModeRequested());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,6 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         },
         builder: (context, state) {
+          final firebaseAvailable = state is AuthUnauthenticated
+              ? state.firebaseAvailable
+              : true;
+
           return SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -89,6 +97,63 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                       ),
                       const SizedBox(height: 48),
+
+                      // Show warning if Firebase is not available
+                      if (!firebaseAvailable) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.orange.shade700,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Firebase no configurado',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Puedes usar el modo demo para explorar la app',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton.icon(
+                          onPressed: state is AuthLoading ? null : _enterDemoMode,
+                          icon: const Icon(Icons.play_arrow),
+                          label: state is AuthLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Entrar en Modo Demo'),
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Regular login form
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -163,6 +228,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               : '¿No tienes cuenta? Regístrate',
                         ),
                       ),
+
+                      // Always show demo mode button at the bottom
+                      if (firebaseAvailable) ...[
+                        const SizedBox(height: 32),
+                        OutlinedButton.icon(
+                          onPressed: state is AuthLoading ? null : _enterDemoMode,
+                          icon: const Icon(Icons.explore),
+                          label: const Text('Explorar sin cuenta'),
+                        ),
+                      ],
                     ],
                   ),
                 ),

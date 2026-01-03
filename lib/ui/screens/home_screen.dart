@@ -30,6 +30,25 @@ class HomeScreenContent extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Real State Investing'),
         actions: [
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              if (authState is AuthAuthenticated && authState.isDemoMode) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Chip(
+                    label: const Text('DEMO'),
+                    backgroundColor: Colors.orange.shade100,
+                    labelStyle: TextStyle(
+                      color: Colors.orange.shade800,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {

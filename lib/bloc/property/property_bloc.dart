@@ -147,7 +147,8 @@ class PropertyBloc extends Bloc<PropertyEvent, PropertyState> {
         hasMore: result.hasMore,
       ));
     } catch (e) {
-      emit(PropertyError('Error al buscar propiedades: ${e.toString()}'));
+      final errorMessage = _mapError(e);
+      emit(PropertyError(errorMessage));
     }
   }
 
@@ -206,8 +207,22 @@ class PropertyBloc extends Bloc<PropertyEvent, PropertyState> {
         isFavorite: false,
       ));
     } catch (e) {
-      emit(PropertyError('Error al cargar la propiedad: ${e.toString()}'));
+      emit(PropertyError(_mapError(e)));
     }
+  }
+
+  String _mapError(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+    if (errorString.contains('connection') ||
+        errorString.contains('socketexception') ||
+        errorString.contains('timeout')) {
+      return 'No se puede conectar al servidor.\nVerifica tu conexión a internet.';
+    } else if (errorString.contains('404')) {
+      return 'Recurso no encontrado';
+    } else if (errorString.contains('500')) {
+      return 'Error en el servidor. Intenta más tarde.';
+    }
+    return 'Error al cargar datos. Intenta de nuevo.';
   }
 
   Future<void> _onFilterChanged(

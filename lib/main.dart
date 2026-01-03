@@ -15,16 +15,30 @@ import 'bloc/auth/auth_bloc.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase (optional - app works without it in demo mode)
+  bool firebaseAvailable = false;
+  try {
+    await Firebase.initializeApp();
+    firebaseAvailable = true;
+  } catch (e) {
+    debugPrint('Firebase not available: $e');
+  }
 
   // Initialize services
   final apiService = ApiService(baseUrl: AppConfig.apiBaseUrl);
   final notificationService = NotificationService();
-  await notificationService.initialize();
+
+  try {
+    await notificationService.initialize();
+  } catch (e) {
+    debugPrint('Notification service not available: $e');
+  }
 
   // Initialize repositories
-  final authRepository = AuthRepository(apiService: apiService);
+  final authRepository = AuthRepository(
+    apiService: apiService,
+    firebaseAvailable: firebaseAvailable,
+  );
   final propertyRepository = PropertyRepository(apiService: apiService);
   final alertRepository = AlertRepository(apiService: apiService);
   final favoriteRepository = FavoriteRepository(apiService: apiService);
@@ -36,6 +50,7 @@ void main() async {
       alertRepository: alertRepository,
       favoriteRepository: favoriteRepository,
       notificationService: notificationService,
+      firebaseAvailable: firebaseAvailable,
     ),
   );
 }
@@ -46,6 +61,7 @@ class MyApp extends StatelessWidget {
   final AlertRepository alertRepository;
   final FavoriteRepository favoriteRepository;
   final NotificationService notificationService;
+  final bool firebaseAvailable;
 
   const MyApp({
     super.key,
@@ -54,6 +70,7 @@ class MyApp extends StatelessWidget {
     required this.alertRepository,
     required this.favoriteRepository,
     required this.notificationService,
+    required this.firebaseAvailable,
   });
 
   @override
@@ -70,6 +87,7 @@ class MyApp extends StatelessWidget {
         create: (context) => AuthBloc(
           authRepository: authRepository,
           notificationService: notificationService,
+          firebaseAvailable: firebaseAvailable,
         )..add(AuthCheckRequested()),
         child: MaterialApp.router(
           title: 'Real State Investing',
