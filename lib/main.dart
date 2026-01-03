@@ -43,34 +43,47 @@ void main() async {
   final alertRepository = AlertRepository(apiService: apiService);
   final favoriteRepository = FavoriteRepository(apiService: apiService);
 
+  // Initialize AuthBloc before creating the router
+  final authBloc = AuthBloc(
+    authRepository: authRepository,
+    notificationService: notificationService,
+    firebaseAvailable: firebaseAvailable,
+  )..add(AuthCheckRequested());
+
+  // Create router with AuthBloc
+  final appRouter = AppRouter(authBloc: authBloc);
+
   runApp(
     MyApp(
+      authBloc: authBloc,
+      appRouter: appRouter,
       authRepository: authRepository,
       propertyRepository: propertyRepository,
       alertRepository: alertRepository,
       favoriteRepository: favoriteRepository,
       notificationService: notificationService,
-      firebaseAvailable: firebaseAvailable,
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  final AuthBloc authBloc;
+  final AppRouter appRouter;
   final AuthRepository authRepository;
   final PropertyRepository propertyRepository;
   final AlertRepository alertRepository;
   final FavoriteRepository favoriteRepository;
   final NotificationService notificationService;
-  final bool firebaseAvailable;
 
   const MyApp({
     super.key,
+    required this.authBloc,
+    required this.appRouter,
     required this.authRepository,
     required this.propertyRepository,
     required this.alertRepository,
     required this.favoriteRepository,
     required this.notificationService,
-    required this.firebaseAvailable,
   });
 
   @override
@@ -83,12 +96,8 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: favoriteRepository),
         RepositoryProvider.value(value: notificationService),
       ],
-      child: BlocProvider(
-        create: (context) => AuthBloc(
-          authRepository: authRepository,
-          notificationService: notificationService,
-          firebaseAvailable: firebaseAvailable,
-        )..add(AuthCheckRequested()),
+      child: BlocProvider.value(
+        value: authBloc,
         child: MaterialApp.router(
           title: 'Real State Investing',
           debugShowCheckedModeBanner: false,
@@ -122,7 +131,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-          routerConfig: AppRouter.router,
+          routerConfig: appRouter.router,
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -9,65 +10,102 @@ import '../ui/screens/search_screen.dart';
 import '../ui/screens/property_detail_screen.dart';
 import '../ui/screens/alerts_screen.dart';
 import '../ui/screens/favorites_screen.dart';
+import '../ui/screens/splash_screen.dart';
+
+/// Converts a Stream into a Listenable for GoRouter refresh
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
 
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) {
-      final authState = context.read<AuthBloc>().state;
-      final isLoggedIn = authState is AuthAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login';
+  final AuthBloc authBloc;
+  late final GoRouter router;
 
-      if (!isLoggedIn && !isLoggingIn) {
-        return '/login';
-      }
+  AppRouter({required this.authBloc}) {
+    router = GoRouter(
+      initialLocation: '/',
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+      redirect: (context, state) {
+        final authState = authBloc.state;
+        final isLoading = authState is AuthInitial || authState is AuthLoading;
+        final isLoggedIn = authState is AuthAuthenticated;
+        final isOnLoginPage = state.matchedLocation == '/login';
+        final isOnSplashPage = state.matchedLocation == '/splash';
 
-      if (isLoggedIn && isLoggingIn) {
-        return '/';
-      }
+        // Show splash screen while checking auth status
+        if (isLoading) {
+          return isOnSplashPage ? null : '/splash';
+        }
 
-      return null;
-    },
-    routes: [
-      GoRoute(
-        path: '/login',
-        name: 'login',
-        builder: (context, state) => const LoginScreen(),
-      ),
-      ShellRoute(
-        builder: (context, state, child) => MainShell(child: child),
-        routes: [
-          GoRoute(
-            path: '/',
-            name: 'home',
-            builder: (context, state) => const HomeScreen(),
-          ),
-          GoRoute(
-            path: '/search',
-            name: 'search',
-            builder: (context, state) => const SearchScreen(),
-          ),
-          GoRoute(
-            path: '/property/:id',
-            name: 'property',
-            builder: (context, state) => PropertyDetailScreen(
-              propertyId: state.pathParameters['id']!,
+        // Not logged in - redirect to login
+        if (!isLoggedIn) {
+          return isOnLoginPage ? null : '/login';
+        }
+
+        // Logged in - redirect away from login/splash
+        if (isLoggedIn && (isOnLoginPage || isOnSplashPage)) {
+          return '/';
+        }
+
+        return null;
+      },
+      routes: [
+        GoRoute(
+          path: '/splash',
+          name: 'splash',
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: '/login',
+          name: 'login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        ShellRoute(
+          builder: (context, state, child) => MainShell(child: child),
+          routes: [
+            GoRoute(
+              path: '/',
+              name: 'home',
+              builder: (context, state) => const HomeScreen(),
             ),
-          ),
-          GoRoute(
-            path: '/alerts',
-            name: 'alerts',
-            builder: (context, state) => const AlertsScreen(),
-          ),
-          GoRoute(
-            path: '/favorites',
-            name: 'favorites',
-            builder: (context, state) => const FavoritesScreen(),
-          ),
-        ],
-      ),
-    ],
-  );
+            GoRoute(
+              path: '/search',
+              name: 'search',
+              builder: (context, state) => const SearchScreen(),
+            ),
+            GoRoute(
+              path: '/property/:id',
+              name: 'property',
+              builder: (context, state) => PropertyDetailScreen(
+                propertyId: state.pathParameters['id']!,
+              ),
+            ),
+            GoRoute(
+              path: '/alerts',
+              name: 'alerts',
+              builder: (context, state) => const AlertsScreen(),
+            ),
+            GoRoute(
+              path: '/favorites',
+              name: 'favorites',
+              builder: (context, state) => const FavoritesScreen(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class MainShell extends StatelessWidget {
