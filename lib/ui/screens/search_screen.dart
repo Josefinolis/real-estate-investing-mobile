@@ -64,17 +64,21 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
   }
 
   void _showFilterPanel() {
+    // Capture the bloc before showing the modal since the modal's context
+    // doesn't have access to the PropertyBloc
+    final propertyBloc = context.read<PropertyBloc>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => FilterPanel(
+      builder: (modalContext) => FilterPanel(
         initialFilter: _currentFilter,
         onApply: (filter) {
           setState(() {
             _currentFilter = filter;
           });
-          context.read<PropertyBloc>().add(PropertyFilterChanged(filter));
-          Navigator.pop(context);
+          propertyBloc.add(PropertyFilterChanged(filter));
+          Navigator.pop(modalContext);
         },
       ),
     );
