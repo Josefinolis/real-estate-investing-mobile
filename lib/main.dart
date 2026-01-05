@@ -13,28 +13,36 @@ import 'data/services/notification_service.dart';
 import 'bloc/auth/auth_bloc.dart';
 
 void main() async {
+  debugPrint('🚀 [MAIN] App starting...');
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('🚀 [MAIN] WidgetsFlutterBinding initialized');
 
   // Initialize Firebase (optional - app works without it in demo mode)
   bool firebaseAvailable = false;
   try {
+    debugPrint('🚀 [MAIN] Initializing Firebase...');
     await Firebase.initializeApp();
     firebaseAvailable = true;
+    debugPrint('🚀 [MAIN] Firebase initialized successfully');
   } catch (e) {
-    debugPrint('Firebase not available: $e');
+    debugPrint('🚀 [MAIN] Firebase not available: $e');
   }
 
   // Initialize services
+  debugPrint('🚀 [MAIN] Creating ApiService...');
   final apiService = ApiService(baseUrl: AppConfig.apiBaseUrl);
   final notificationService = NotificationService();
 
   try {
+    debugPrint('🚀 [MAIN] Initializing NotificationService...');
     await notificationService.initialize();
+    debugPrint('🚀 [MAIN] NotificationService initialized');
   } catch (e) {
-    debugPrint('Notification service not available: $e');
+    debugPrint('🚀 [MAIN] Notification service not available: $e');
   }
 
   // Initialize repositories
+  debugPrint('🚀 [MAIN] Creating repositories...');
   final authRepository = AuthRepository(
     apiService: apiService,
     firebaseAvailable: firebaseAvailable,
@@ -44,15 +52,20 @@ void main() async {
   final favoriteRepository = FavoriteRepository(apiService: apiService);
 
   // Initialize AuthBloc before creating the router
+  debugPrint('🚀 [MAIN] Creating AuthBloc...');
   final authBloc = AuthBloc(
     authRepository: authRepository,
     notificationService: notificationService,
     firebaseAvailable: firebaseAvailable,
   )..add(AuthCheckRequested());
+  debugPrint('🚀 [MAIN] AuthBloc created, AuthCheckRequested added');
 
   // Create router with AuthBloc
+  debugPrint('🚀 [MAIN] Creating AppRouter...');
   final appRouter = AppRouter(authBloc: authBloc);
+  debugPrint('🚀 [MAIN] AppRouter created');
 
+  debugPrint('🚀 [MAIN] Calling runApp...');
   runApp(
     MyApp(
       authBloc: authBloc,
@@ -64,6 +77,7 @@ void main() async {
       notificationService: notificationService,
     ),
   );
+  debugPrint('🚀 [MAIN] runApp called');
 }
 
 class MyApp extends StatelessWidget {
@@ -88,6 +102,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🚀 [MYAPP] Building MyApp widget...');
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: authRepository),

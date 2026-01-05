@@ -15,8 +15,12 @@ import '../ui/screens/splash_screen.dart';
 /// Converts a Stream into a Listenable for GoRouter refresh
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
+    debugPrint('🛣️ [ROUTER] GoRouterRefreshStream created');
     notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+    _subscription = stream.asBroadcastStream().listen((event) {
+      debugPrint('🛣️ [ROUTER] Stream event received: $event');
+      notifyListeners();
+    });
   }
 
   late final StreamSubscription<dynamic> _subscription;
@@ -33,6 +37,7 @@ class AppRouter {
   late final GoRouter router;
 
   AppRouter({required this.authBloc}) {
+    debugPrint('🛣️ [ROUTER] AppRouter constructor called');
     router = GoRouter(
       initialLocation: '/',
       refreshListenable: GoRouterRefreshStream(authBloc.stream),
@@ -43,41 +48,65 @@ class AppRouter {
         final isOnLoginPage = state.matchedLocation == '/login';
         final isOnSplashPage = state.matchedLocation == '/splash';
 
+        debugPrint('🛣️ [ROUTER] redirect called:');
+        debugPrint('🛣️ [ROUTER]   - authState: $authState');
+        debugPrint('🛣️ [ROUTER]   - isLoading: $isLoading');
+        debugPrint('🛣️ [ROUTER]   - isLoggedIn: $isLoggedIn');
+        debugPrint('🛣️ [ROUTER]   - matchedLocation: ${state.matchedLocation}');
+
         // Show splash screen while checking auth status
         if (isLoading) {
-          return isOnSplashPage ? null : '/splash';
+          final redirect = isOnSplashPage ? null : '/splash';
+          debugPrint('🛣️ [ROUTER]   -> Redirecting to: $redirect (loading state)');
+          return redirect;
         }
 
         // Not logged in - redirect to login
         if (!isLoggedIn) {
-          return isOnLoginPage ? null : '/login';
+          final redirect = isOnLoginPage ? null : '/login';
+          debugPrint('🛣️ [ROUTER]   -> Redirecting to: $redirect (not logged in)');
+          return redirect;
         }
 
         // Logged in - redirect away from login/splash
         if (isLoggedIn && (isOnLoginPage || isOnSplashPage)) {
+          debugPrint('🛣️ [ROUTER]   -> Redirecting to: / (logged in, leaving auth pages)');
           return '/';
         }
 
+        debugPrint('🛣️ [ROUTER]   -> No redirect needed');
         return null;
       },
       routes: [
         GoRoute(
           path: '/splash',
           name: 'splash',
-          builder: (context, state) => const SplashScreen(),
+          builder: (context, state) {
+            debugPrint('🛣️ [ROUTER] Building SplashScreen');
+            return const SplashScreen();
+          },
         ),
         GoRoute(
           path: '/login',
           name: 'login',
-          builder: (context, state) => const LoginScreen(),
+          builder: (context, state) {
+            debugPrint('🛣️ [ROUTER] Building LoginScreen');
+            return const LoginScreen();
+          },
         ),
         ShellRoute(
-          builder: (context, state, child) => MainShell(child: child),
+          builder: (context, state, child) {
+            debugPrint('🛣️ [ROUTER] Building MainShell');
+            return MainShell(child: child);
+          },
           routes: [
             GoRoute(
               path: '/',
               name: 'home',
-              builder: (context, state) => const HomeScreen(),
+              builder: (context, state) {
+                debugPrint('🛣️ [ROUTER] Building HomeScreen');
+                return const HomeScreen();
+              },
             ),
             GoRoute(
               path: '/search',
@@ -105,6 +134,7 @@ class AppRouter {
         ),
       ],
     );
+    debugPrint('🛣️ [ROUTER] GoRouter created');
   }
 }
 
@@ -115,9 +145,12 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🛣️ [MAINSHELL] Building MainShell widget');
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        debugPrint('🛣️ [MAINSHELL] AuthState changed: $state');
         if (state is AuthUnauthenticated) {
+          debugPrint('🛣️ [MAINSHELL] Navigating to /login');
           context.go('/login');
         }
       },

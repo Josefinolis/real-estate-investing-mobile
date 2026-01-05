@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../data/models/user.dart';
@@ -47,9 +48,15 @@ abstract class AuthState extends Equatable {
   List<Object?> get props => [];
 }
 
-class AuthInitial extends AuthState {}
+class AuthInitial extends AuthState {
+  @override
+  String toString() => 'AuthInitial';
+}
 
-class AuthLoading extends AuthState {}
+class AuthLoading extends AuthState {
+  @override
+  String toString() => 'AuthLoading';
+}
 
 class AuthAuthenticated extends AuthState {
   final User user;
@@ -59,6 +66,9 @@ class AuthAuthenticated extends AuthState {
 
   @override
   List<Object?> get props => [user, isDemoMode];
+
+  @override
+  String toString() => 'AuthAuthenticated(user: ${user.email}, isDemoMode: $isDemoMode)';
 }
 
 class AuthUnauthenticated extends AuthState {
@@ -68,6 +78,9 @@ class AuthUnauthenticated extends AuthState {
 
   @override
   List<Object?> get props => [firebaseAvailable];
+
+  @override
+  String toString() => 'AuthUnauthenticated(firebaseAvailable: $firebaseAvailable)';
 }
 
 class AuthError extends AuthState {
@@ -77,6 +90,9 @@ class AuthError extends AuthState {
 
   @override
   List<Object?> get props => [message];
+
+  @override
+  String toString() => 'AuthError(message: $message)';
 }
 
 // Bloc
@@ -93,6 +109,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   })  : _authRepository = authRepository,
         _notificationService = notificationService,
         super(AuthInitial()) {
+    debugPrint('🔐 [AUTH_BLOC] AuthBloc created, initial state: AuthInitial');
+    debugPrint('🔐 [AUTH_BLOC] firebaseAvailable: $firebaseAvailable');
+
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignUpRequested>(_onSignUpRequested);
@@ -100,7 +119,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthDemoModeRequested>(_onDemoModeRequested);
 
     _authSubscription = _authRepository.authStateChanges.listen((firebaseUser) {
+      debugPrint('🔐 [AUTH_BLOC] authStateChanges event: $firebaseUser');
       if (firebaseUser == null && !_authRepository.isDemoMode) {
+        debugPrint('🔐 [AUTH_BLOC] Adding AuthCheckRequested from stream');
         add(AuthCheckRequested());
       }
     });
@@ -110,12 +131,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
+    debugPrint('🔐 [AUTH_BLOC] _onAuthCheckRequested called');
+    debugPrint('🔐 [AUTH_BLOC]   - isDemoMode: ${_authRepository.isDemoMode}');
+    debugPrint('🔐 [AUTH_BLOC]   - firebaseAvailable: $firebaseAvailable');
+
     // If already in demo mode, stay authenticated
     if (_authRepository.isDemoMode) {
+      debugPrint('🔐 [AUTH_BLOC] Already in demo mode');
       try {
         final user = await _authRepository.getCurrentUser();
+        debugPrint('🔐 [AUTH_BLOC] Emitting AuthAuthenticated (demo mode)');
         emit(AuthAuthenticated(user, isDemoMode: true));
       } catch (e) {
+        debugPrint('🔐 [AUTH_BLOC] Error getting user in demo mode: $e');
         emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
       }
       return;
@@ -124,22 +152,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // If Firebase is not available, go to unauthenticated state
     // User can choose to enter demo mode
     if (!firebaseAvailable) {
+      debugPrint('🔐 [AUTH_BLOC] Firebase not available, emitting AuthUnauthenticated');
       emit(AuthUnauthenticated(firebaseAvailable: false));
       return;
     }
 
     final firebaseUser = _authRepository.currentUser;
+    debugPrint('🔐 [AUTH_BLOC] currentUser: $firebaseUser');
 
     if (firebaseUser == null) {
+      debugPrint('🔐 [AUTH_BLOC] No firebase user, emitting AuthUnauthenticated');
       emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
       return;
     }
 
     try {
+      debugPrint('🔐 [AUTH_BLOC] Getting current user from repository...');
       final user = await _authRepository.getCurrentUser();
       await _updateFcmToken();
+      debugPrint('🔐 [AUTH_BLOC] Emitting AuthAuthenticated');
       emit(AuthAuthenticated(user));
     } catch (e) {
+      debugPrint('🔐 [AUTH_BLOC] Error getting current user: $e');
       emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
     }
   }
@@ -148,6 +182,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
+    debugPrint('🔐 [AUTH_BLOC] _onSignInRequested called');
     emit(AuthLoading());
 
     try {
@@ -156,8 +191,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       await _updateFcmToken();
+      debugPrint('🔐 [AUTH_BLOC] Sign in successful, emitting AuthAuthenticated');
       emit(AuthAuthenticated(user, isDemoMode: _authRepository.isDemoMode));
     } catch (e) {
+      debugPrint('🔐 [AUTH_BLOC] Sign in error: $e');
       emit(AuthError(_mapAuthError(e)));
     }
   }
@@ -166,6 +203,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignUpRequested event,
     Emitter<AuthState> emit,
   ) async {
+    debugPrint('🔐 [AUTH_BLOC] _onSignUpRequested called');
     emit(AuthLoading());
 
     try {
@@ -174,8 +212,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
       await _updateFcmToken();
+      debugPrint('🔐 [AUTH_BLOC] Sign up successful, emitting AuthAuthenticated');
       emit(AuthAuthenticated(user, isDemoMode: _authRepository.isDemoMode));
     } catch (e) {
+      debugPrint('🔐 [AUTH_BLOC] Sign up error: $e');
       emit(AuthError(_mapAuthError(e)));
     }
   }
@@ -184,7 +224,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignOutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    debugPrint('🔐 [AUTH_BLOC] _onSignOutRequested called');
     await _authRepository.signOut();
+    debugPrint('🔐 [AUTH_BLOC] Emitting AuthUnauthenticated');
     emit(AuthUnauthenticated(firebaseAvailable: firebaseAvailable));
   }
 
@@ -192,12 +234,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthDemoModeRequested event,
     Emitter<AuthState> emit,
   ) async {
+    debugPrint('🔐 [AUTH_BLOC] _onDemoModeRequested called');
     emit(AuthLoading());
 
     try {
       final user = await _authRepository.enterDemoMode();
+      debugPrint('🔐 [AUTH_BLOC] Demo mode entered, emitting AuthAuthenticated');
       emit(AuthAuthenticated(user, isDemoMode: true));
     } catch (e) {
+      debugPrint('🔐 [AUTH_BLOC] Demo mode error: $e');
       emit(AuthError('Error al entrar en modo demo'));
     }
   }
@@ -233,6 +278,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   @override
   Future<void> close() {
+    debugPrint('🔐 [AUTH_BLOC] Closing AuthBloc');
     _authSubscription?.cancel();
     return super.close();
   }

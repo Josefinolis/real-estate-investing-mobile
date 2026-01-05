@@ -5,6 +5,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🌊 [SPLASH] Building SplashScreen widget');
     return Scaffold(
       body: Center(
         child: Column(
@@ -24,6 +25,13 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Cargando...',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+            ),
           ],
         ),
       ),
