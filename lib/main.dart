@@ -30,7 +30,10 @@ void main() async {
 
   // Initialize services
   debugPrint('🚀 [MAIN] Creating ApiService...');
-  final apiService = ApiService(baseUrl: AppConfig.apiBaseUrl);
+  final apiService = ApiService(
+    baseUrl: AppConfig.apiBaseUrl,
+    firebaseAvailable: firebaseAvailable,
+  );
   final notificationService = NotificationService();
 
   try {

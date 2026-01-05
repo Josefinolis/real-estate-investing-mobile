@@ -10,8 +10,9 @@ import '../../config/app_config.dart';
 class ApiService {
   final Dio _dio;
   final String baseUrl;
+  final bool firebaseAvailable;
 
-  ApiService({required this.baseUrl})
+  ApiService({required this.baseUrl, this.firebaseAvailable = true})
       : _dio = Dio(BaseOptions(
           baseUrl: baseUrl,
           connectTimeout: AppConfig.connectionTimeout,
@@ -22,9 +23,15 @@ class ApiService {
         )) {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final user = firebase_auth.FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          options.headers['X-Firebase-UID'] = user.uid;
+        if (firebaseAvailable) {
+          try {
+            final user = firebase_auth.FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              options.headers['X-Firebase-UID'] = user.uid;
+            }
+          } catch (e) {
+            // Firebase not available, continue without auth header
+          }
         }
         return handler.next(options);
       },
