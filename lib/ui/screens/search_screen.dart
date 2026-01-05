@@ -9,21 +9,25 @@ import '../widgets/property_card.dart';
 import '../widgets/filter_panel.dart';
 
 class SearchScreen extends StatelessWidget {
-  const SearchScreen({super.key});
+  final SearchFilter initialFilter;
+
+  const SearchScreen({super.key, this.initialFilter = const SearchFilter()});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => PropertyBloc(
         propertyRepository: context.read<PropertyRepository>(),
-      )..add(const PropertySearchRequested(SearchFilter())),
-      child: const SearchScreenContent(),
+      )..add(PropertySearchRequested(initialFilter)),
+      child: SearchScreenContent(initialFilter: initialFilter),
     );
   }
 }
 
 class SearchScreenContent extends StatefulWidget {
-  const SearchScreenContent({super.key});
+  final SearchFilter initialFilter;
+
+  const SearchScreenContent({super.key, this.initialFilter = const SearchFilter()});
 
   @override
   State<SearchScreenContent> createState() => _SearchScreenContentState();
@@ -31,11 +35,12 @@ class SearchScreenContent extends StatefulWidget {
 
 class _SearchScreenContentState extends State<SearchScreenContent> {
   final ScrollController _scrollController = ScrollController();
-  SearchFilter _currentFilter = const SearchFilter();
+  late SearchFilter _currentFilter;
 
   @override
   void initState() {
     super.initState();
+    _currentFilter = widget.initialFilter;
     _scrollController.addListener(_onScroll);
   }
 

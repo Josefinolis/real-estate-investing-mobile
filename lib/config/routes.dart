@@ -11,6 +11,8 @@ import '../ui/screens/property_detail_screen.dart';
 import '../ui/screens/alerts_screen.dart';
 import '../ui/screens/favorites_screen.dart';
 import '../ui/screens/splash_screen.dart';
+import '../data/models/search_filter.dart';
+import '../data/models/property.dart';
 
 /// Converts a Stream into a Listenable for GoRouter refresh
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -111,7 +113,18 @@ class AppRouter {
             GoRoute(
               path: '/search',
               name: 'search',
-              builder: (context, state) => const SearchScreen(),
+              builder: (context, state) {
+                final queryParams = state.uri.queryParameters;
+                final filter = SearchFilter(
+                  city: queryParams['city'],
+                  operationType: _parseOperationType(queryParams['operation']),
+                  propertyType: _parsePropertyType(queryParams['propertyType']),
+                  minPrice: double.tryParse(queryParams['minPrice'] ?? ''),
+                  maxPrice: double.tryParse(queryParams['maxPrice'] ?? ''),
+                  minRooms: int.tryParse(queryParams['minRooms'] ?? ''),
+                );
+                return SearchScreen(initialFilter: filter);
+              },
             ),
             GoRoute(
               path: '/property/:id',
@@ -211,5 +224,35 @@ class MainShell extends StatelessWidget {
         context.go('/favorites');
         break;
     }
+  }
+}
+
+OperationType? _parseOperationType(String? value) {
+  if (value == null) return null;
+  switch (value.toUpperCase()) {
+    case 'VENTA':
+      return OperationType.venta;
+    case 'ALQUILER':
+      return OperationType.alquiler;
+    default:
+      return null;
+  }
+}
+
+PropertyType? _parsePropertyType(String? value) {
+  if (value == null) return null;
+  switch (value.toUpperCase()) {
+    case 'PISO':
+      return PropertyType.piso;
+    case 'CASA':
+      return PropertyType.casa;
+    case 'CHALET':
+      return PropertyType.chalet;
+    case 'ATICO':
+      return PropertyType.atico;
+    case 'ESTUDIO':
+      return PropertyType.estudio;
+    default:
+      return null;
   }
 }

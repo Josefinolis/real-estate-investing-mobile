@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/property/property_bloc.dart';
+import '../../data/models/property.dart';
 import '../../data/models/search_filter.dart';
 import '../../data/repositories/property_repository.dart';
 import '../widgets/property_card.dart';
@@ -21,8 +22,29 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class HomeScreenContent extends StatelessWidget {
+class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
+
+  @override
+  State<HomeScreenContent> createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends State<HomeScreenContent> {
+  OperationType? _selectedOperation;
+  String? _selectedCity;
+
+  void _navigateToSearch() {
+    final params = <String, String>{};
+    if (_selectedOperation != null) {
+      params['operation'] = _selectedOperation == OperationType.venta ? 'VENTA' : 'ALQUILER';
+    }
+    if (_selectedCity != null) {
+      params['city'] = _selectedCity!;
+    }
+
+    final query = params.entries.map((e) => '${e.key}=${e.value}').join('&');
+    context.go('/search${query.isNotEmpty ? '?$query' : ''}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,52 +204,88 @@ class HomeScreenContent extends StatelessWidget {
   }
 
   Widget _buildQuickFilters(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    final hasFilters = _selectedOperation != null || _selectedCity != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _QuickFilterChip(
-          label: 'Comprar',
-          icon: Icons.shopping_cart_outlined,
-          onTap: () => context.go('/search?operation=VENTA'),
+        Text(
+          'Tipo de operación',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.grey,
+              ),
         ),
-        _QuickFilterChip(
-          label: 'Alquilar',
-          icon: Icons.key_outlined,
-          onTap: () => context.go('/search?operation=ALQUILER'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              avatar: const Icon(Icons.shopping_cart_outlined, size: 18),
+              label: const Text('Comprar'),
+              selected: _selectedOperation == OperationType.venta,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedOperation = selected ? OperationType.venta : null;
+                });
+              },
+            ),
+            FilterChip(
+              avatar: const Icon(Icons.key_outlined, size: 18),
+              label: const Text('Alquilar'),
+              selected: _selectedOperation == OperationType.alquiler,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedOperation = selected ? OperationType.alquiler : null;
+                });
+              },
+            ),
+          ],
         ),
-        _QuickFilterChip(
-          label: 'Madrid',
-          icon: Icons.location_city,
-          onTap: () => context.go('/search?city=Madrid'),
+        const SizedBox(height: 16),
+        Text(
+          'Ciudad',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.grey,
+              ),
         ),
-        _QuickFilterChip(
-          label: 'Barcelona',
-          icon: Icons.location_city,
-          onTap: () => context.go('/search?city=Barcelona'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              avatar: const Icon(Icons.location_city, size: 18),
+              label: const Text('Madrid'),
+              selected: _selectedCity == 'Madrid',
+              onSelected: (selected) {
+                setState(() {
+                  _selectedCity = selected ? 'Madrid' : null;
+                });
+              },
+            ),
+            FilterChip(
+              avatar: const Icon(Icons.location_city, size: 18),
+              label: const Text('Barcelona'),
+              selected: _selectedCity == 'Barcelona',
+              onSelected: (selected) {
+                setState(() {
+                  _selectedCity = selected ? 'Barcelona' : null;
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _navigateToSearch,
+            icon: const Icon(Icons.search),
+            label: Text(hasFilters ? 'Buscar con filtros' : 'Ver todos'),
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _QuickFilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _QuickFilterChip({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-      onPressed: onTap,
     );
   }
 }
