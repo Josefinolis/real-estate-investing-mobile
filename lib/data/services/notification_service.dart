@@ -2,14 +2,23 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 class NotificationService {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
+  bool _initialized = false;
 
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
+  bool get isAvailable => _initialized;
 
   Future<void> initialize() async {
+    try {
+      _messaging = FirebaseMessaging.instance;
+    } catch (e) {
+      debugPrint('🔔 [NOTIFICATION] Firebase Messaging not available: $e');
+      return;
+    }
+
     // Request permission
-    final settings = await _messaging.requestPermission(
+    final settings = await _messaging!.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -17,16 +26,16 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted notification permission');
+      debugPrint('🔔 [NOTIFICATION] User granted notification permission');
 
       // Get FCM token
-      _fcmToken = await _messaging.getToken();
-      debugPrint('FCM Token: $_fcmToken');
+      _fcmToken = await _messaging!.getToken();
+      debugPrint('🔔 [NOTIFICATION] FCM Token: $_fcmToken');
 
       // Listen for token refresh
-      _messaging.onTokenRefresh.listen((newToken) {
+      _messaging!.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
-        debugPrint('FCM Token refreshed: $newToken');
+        debugPrint('🔔 [NOTIFICATION] FCM Token refreshed: $newToken');
       });
 
       // Handle foreground messages
@@ -39,12 +48,15 @@ class NotificationService {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
       // Check if app was opened from notification
-      final initialMessage = await _messaging.getInitialMessage();
+      final initialMessage = await _messaging!.getInitialMessage();
       if (initialMessage != null) {
         _handleMessageOpenedApp(initialMessage);
       }
+
+      _initialized = true;
+      debugPrint('🔔 [NOTIFICATION] Service initialized successfully');
     } else {
-      debugPrint('User declined notification permission');
+      debugPrint('🔔 [NOTIFICATION] User declined notification permission');
     }
   }
 
@@ -72,11 +84,15 @@ class NotificationService {
   }
 
   Future<void> subscribeToTopic(String topic) async {
-    await _messaging.subscribeToTopic(topic);
+    if (_messaging != null) {
+      await _messaging!.subscribeToTopic(topic);
+    }
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
-    await _messaging.unsubscribeFromTopic(topic);
+    if (_messaging != null) {
+      await _messaging!.unsubscribeFromTopic(topic);
+    }
   }
 }
 
