@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         applicationId "com.realstate.investing"
-        minSdk 21
+        minSdk 23
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
