@@ -11,6 +11,9 @@ import '../ui/screens/property_detail_screen.dart';
 import '../ui/screens/alerts_screen.dart';
 import '../ui/screens/favorites_screen.dart';
 import '../ui/screens/splash_screen.dart';
+import '../ui/screens/settings_screen.dart';
+import '../ui/screens/scraper_config_screen.dart';
+import '../ui/screens/scraper_monitor_screen.dart';
 import '../data/models/search_filter.dart';
 import '../data/models/property.dart';
 
@@ -146,6 +149,21 @@ class AppRouter {
               name: 'favorites',
               builder: (context, state) => const FavoritesScreen(),
             ),
+            GoRoute(
+              path: '/settings',
+              name: 'settings',
+              builder: (context, state) => const SettingsScreen(),
+            ),
+            GoRoute(
+              path: '/settings/scraper',
+              name: 'scraper-config',
+              builder: (context, state) => const ScraperConfigScreen(),
+            ),
+            GoRoute(
+              path: '/settings/scraper/monitor',
+              name: 'scraper-monitor',
+              builder: (context, state) => const ScraperMonitorScreen(),
+            ),
           ],
         ),
       ],
@@ -196,6 +214,11 @@ class MainShell extends StatelessWidget {
               selectedIcon: Icon(Icons.favorite),
               label: 'Favoritos',
             ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Ajustes',
+            ),
           ],
         ),
       ),
@@ -209,6 +232,7 @@ class MainShell extends StatelessWidget {
     }
     if (location.startsWith('/alerts')) return 2;
     if (location.startsWith('/favorites')) return 3;
+    if (location.startsWith('/settings')) return 4;
     return 0;
   }
 
@@ -225,6 +249,9 @@ class MainShell extends StatelessWidget {
         break;
       case 3:
         context.go('/favorites');
+        break;
+      case 4:
+        context.go('/settings');
         break;
     }
   }

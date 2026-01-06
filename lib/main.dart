@@ -8,6 +8,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/repositories/property_repository.dart';
 import 'data/repositories/alert_repository.dart';
 import 'data/repositories/favorite_repository.dart';
+import 'data/repositories/scraper_repository.dart';
 import 'data/services/api_service.dart';
 import 'data/services/notification_service.dart';
 import 'bloc/auth/auth_bloc.dart';
@@ -53,6 +54,7 @@ void main() async {
   final propertyRepository = PropertyRepository(apiService: apiService);
   final alertRepository = AlertRepository(apiService: apiService);
   final favoriteRepository = FavoriteRepository(apiService: apiService);
+  final scraperRepository = ScraperRepository(apiService: apiService);
 
   // Initialize AuthBloc before creating the router
   debugPrint('🚀 [MAIN] Creating AuthBloc...');
@@ -77,6 +79,7 @@ void main() async {
       propertyRepository: propertyRepository,
       alertRepository: alertRepository,
       favoriteRepository: favoriteRepository,
+      scraperRepository: scraperRepository,
       notificationService: notificationService,
     ),
   );
@@ -90,6 +93,7 @@ class MyApp extends StatelessWidget {
   final PropertyRepository propertyRepository;
   final AlertRepository alertRepository;
   final FavoriteRepository favoriteRepository;
+  final ScraperRepository scraperRepository;
   final NotificationService notificationService;
 
   const MyApp({
@@ -100,6 +104,7 @@ class MyApp extends StatelessWidget {
     required this.propertyRepository,
     required this.alertRepository,
     required this.favoriteRepository,
+    required this.scraperRepository,
     required this.notificationService,
   });
 
@@ -112,6 +117,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: propertyRepository),
         RepositoryProvider.value(value: alertRepository),
         RepositoryProvider.value(value: favoriteRepository),
+        RepositoryProvider.value(value: scraperRepository),
         RepositoryProvider.value(value: notificationService),
       ],
       child: BlocProvider.value(

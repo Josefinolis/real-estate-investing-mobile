@@ -5,6 +5,8 @@ import '../models/alert.dart';
 import '../models/favorite.dart';
 import '../models/price_history.dart';
 import '../models/user.dart';
+import '../models/scraper_config.dart';
+import '../models/scraper_run.dart';
 import '../../config/app_config.dart';
 
 class ApiService {
@@ -123,5 +125,57 @@ class ApiService {
   Future<bool> checkFavorite(String propertyId) async {
     final response = await _dio.get('/favorites/check/$propertyId');
     return response.data['isFavorite'] as bool;
+  }
+
+  // Scraper
+  Future<ScraperConfig> getScraperConfig() async {
+    final response = await _dio.get('/scraper/config');
+    return ScraperConfig.fromJson(response.data);
+  }
+
+  Future<ScraperConfig> updateScraperConfig(ScraperConfigUpdate config) async {
+    final response = await _dio.put('/scraper/config', data: config.toJson());
+    return ScraperConfig.fromJson(response.data);
+  }
+
+  Future<ScraperRunList> getScraperRuns({int page = 0, int size = 20}) async {
+    final response = await _dio.get('/scraper/runs', queryParameters: {
+      'page': page,
+      'size': size,
+    });
+    return ScraperRunList.fromJson(response.data);
+  }
+
+  Future<ScraperRun?> getLastScraperRun() async {
+    final response = await _dio.get('/scraper/runs/last');
+    if (response.data == null) return null;
+    return ScraperRun.fromJson(response.data);
+  }
+
+  Future<ScraperStatus> getScraperStatus() async {
+    final response = await _dio.get('/scraper/status');
+    return ScraperStatus.fromJson(response.data);
+  }
+
+  Future<Map<String, dynamic>> triggerScraperRun() async {
+    final response = await _dio.post('/scraper/run');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<List<String>> getAvailableCities() async {
+    final response = await _dio.get('/scraper/cities');
+    return (response.data as List<dynamic>).map((e) => e as String).toList();
+  }
+
+  Future<List<String>> getPropertyTypes() async {
+    final response = await _dio.get('/scraper/property-types');
+    return (response.data as List<dynamic>).map((e) => e as String).toList();
+  }
+
+  Future<List<Map<String, String>>> getFrequencies() async {
+    final response = await _dio.get('/scraper/frequencies');
+    return (response.data as List<dynamic>)
+        .map((e) => Map<String, String>.from(e as Map))
+        .toList();
   }
 }
