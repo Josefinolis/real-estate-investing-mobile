@@ -16,16 +16,15 @@ import '../data/models/property.dart';
 
 /// Converts a Stream into a Listenable for GoRouter refresh
 class GoRouterRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<dynamic> _subscription;
+
   GoRouterRefreshStream(Stream<dynamic> stream) {
     debugPrint('🛣️ [ROUTER] GoRouterRefreshStream created');
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((event) {
+    _subscription = stream.listen((event) {
       debugPrint('🛣️ [ROUTER] Stream event received: $event');
       notifyListeners();
     });
   }
-
-  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {
@@ -117,11 +116,15 @@ class AppRouter {
                 final queryParams = state.uri.queryParameters;
                 final filter = SearchFilter(
                   city: queryParams['city'],
+                  postalCode: queryParams['postalCode'],
                   operationType: _parseOperationType(queryParams['operation']),
                   propertyType: _parsePropertyType(queryParams['propertyType']),
                   minPrice: double.tryParse(queryParams['minPrice'] ?? ''),
                   maxPrice: double.tryParse(queryParams['maxPrice'] ?? ''),
                   minRooms: int.tryParse(queryParams['minRooms'] ?? ''),
+                  minBathrooms: int.tryParse(queryParams['minBathrooms'] ?? ''),
+                  minArea: double.tryParse(queryParams['minArea'] ?? ''),
+                  maxArea: double.tryParse(queryParams['maxArea'] ?? ''),
                 );
                 return SearchScreen(initialFilter: filter);
               },

@@ -3,6 +3,7 @@ import 'property.dart';
 
 class SearchFilter extends Equatable {
   final String? city;
+  final String? postalCode;
   final List<String>? zones;
   final OperationType? operationType;
   final PropertyType? propertyType;
@@ -10,6 +11,7 @@ class SearchFilter extends Equatable {
   final double? maxPrice;
   final int? minRooms;
   final int? maxRooms;
+  final int? minBathrooms;
   final double? minArea;
   final double? maxArea;
   final int page;
@@ -17,6 +19,7 @@ class SearchFilter extends Equatable {
 
   const SearchFilter({
     this.city,
+    this.postalCode,
     this.zones,
     this.operationType,
     this.propertyType,
@@ -24,6 +27,7 @@ class SearchFilter extends Equatable {
     this.maxPrice,
     this.minRooms,
     this.maxRooms,
+    this.minBathrooms,
     this.minArea,
     this.maxArea,
     this.page = 0,
@@ -32,6 +36,7 @@ class SearchFilter extends Equatable {
 
   SearchFilter copyWith({
     String? city,
+    String? postalCode,
     List<String>? zones,
     OperationType? operationType,
     PropertyType? propertyType,
@@ -39,6 +44,7 @@ class SearchFilter extends Equatable {
     double? maxPrice,
     int? minRooms,
     int? maxRooms,
+    int? minBathrooms,
     double? minArea,
     double? maxArea,
     int? page,
@@ -46,6 +52,7 @@ class SearchFilter extends Equatable {
   }) {
     return SearchFilter(
       city: city ?? this.city,
+      postalCode: postalCode ?? this.postalCode,
       zones: zones ?? this.zones,
       operationType: operationType ?? this.operationType,
       propertyType: propertyType ?? this.propertyType,
@@ -53,6 +60,7 @@ class SearchFilter extends Equatable {
       maxPrice: maxPrice ?? this.maxPrice,
       minRooms: minRooms ?? this.minRooms,
       maxRooms: maxRooms ?? this.maxRooms,
+      minBathrooms: minBathrooms ?? this.minBathrooms,
       minArea: minArea ?? this.minArea,
       maxArea: maxArea ?? this.maxArea,
       page: page ?? this.page,
@@ -64,6 +72,7 @@ class SearchFilter extends Equatable {
     final params = <String, dynamic>{};
 
     if (city != null) params['city'] = city;
+    if (postalCode != null) params['postalCode'] = postalCode;
     if (operationType != null) {
       params['operationType'] = operationType!.name.toUpperCase();
     }
@@ -74,6 +83,7 @@ class SearchFilter extends Equatable {
     if (maxPrice != null) params['maxPrice'] = maxPrice.toString();
     if (minRooms != null) params['minRooms'] = minRooms.toString();
     if (maxRooms != null) params['maxRooms'] = maxRooms.toString();
+    if (minBathrooms != null) params['minBathrooms'] = minBathrooms.toString();
     if (minArea != null) params['minArea'] = minArea.toString();
     if (maxArea != null) params['maxArea'] = maxArea.toString();
     params['page'] = page.toString();
@@ -84,18 +94,21 @@ class SearchFilter extends Equatable {
 
   bool get hasActiveFilters =>
       city != null ||
+      postalCode != null ||
       operationType != null ||
       propertyType != null ||
       minPrice != null ||
       maxPrice != null ||
       minRooms != null ||
       maxRooms != null ||
+      minBathrooms != null ||
       minArea != null ||
       maxArea != null;
 
   @override
   List<Object?> get props => [
         city,
+        postalCode,
         zones,
         operationType,
         propertyType,
@@ -103,6 +116,7 @@ class SearchFilter extends Equatable {
         maxPrice,
         minRooms,
         maxRooms,
+        minBathrooms,
         minArea,
         maxArea,
         page,

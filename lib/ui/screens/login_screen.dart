@@ -48,9 +48,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          // Solo escuchar cambios relevantes para evitar triggers innecesarios
+          return current is AuthAuthenticated || current is AuthError;
+        },
         listener: (context, state) {
+          debugPrint('🔐 [LOGIN_SCREEN] BlocConsumer listener: $state');
           if (state is AuthAuthenticated) {
-            context.go('/');
+            debugPrint('🔐 [LOGIN_SCREEN] Navigating to home...');
+            // Usar Future.microtask para evitar race conditions con el router
+            Future.microtask(() {
+              if (context.mounted) {
+                context.go('/');
+              }
+            });
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

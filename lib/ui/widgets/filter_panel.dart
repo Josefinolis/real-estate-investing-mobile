@@ -18,15 +18,18 @@ class FilterPanel extends StatefulWidget {
 
 class _FilterPanelState extends State<FilterPanel> {
   late String? _selectedCity;
+  late String? _postalCode;
   late OperationType? _operationType;
   late PropertyType? _propertyType;
   late double? _minPrice;
   late double? _maxPrice;
   late int? _minRooms;
   late int? _maxRooms;
+  late int? _minBathrooms;
   late double? _minArea;
   late double? _maxArea;
 
+  final _postalCodeController = TextEditingController();
   final _minPriceController = TextEditingController();
   final _maxPriceController = TextEditingController();
   final _minAreaController = TextEditingController();
@@ -36,15 +39,20 @@ class _FilterPanelState extends State<FilterPanel> {
   void initState() {
     super.initState();
     _selectedCity = widget.initialFilter.city;
+    _postalCode = widget.initialFilter.postalCode;
     _operationType = widget.initialFilter.operationType;
     _propertyType = widget.initialFilter.propertyType;
     _minPrice = widget.initialFilter.minPrice;
     _maxPrice = widget.initialFilter.maxPrice;
     _minRooms = widget.initialFilter.minRooms;
     _maxRooms = widget.initialFilter.maxRooms;
+    _minBathrooms = widget.initialFilter.minBathrooms;
     _minArea = widget.initialFilter.minArea;
     _maxArea = widget.initialFilter.maxArea;
 
+    if (_postalCode != null) {
+      _postalCodeController.text = _postalCode!;
+    }
     if (_minPrice != null) {
       _minPriceController.text = _minPrice!.toStringAsFixed(0);
     }
@@ -61,6 +69,7 @@ class _FilterPanelState extends State<FilterPanel> {
 
   @override
   void dispose() {
+    _postalCodeController.dispose();
     _minPriceController.dispose();
     _maxPriceController.dispose();
     _minAreaController.dispose();
@@ -71,14 +80,17 @@ class _FilterPanelState extends State<FilterPanel> {
   void _clearFilters() {
     setState(() {
       _selectedCity = null;
+      _postalCode = null;
       _operationType = null;
       _propertyType = null;
       _minPrice = null;
       _maxPrice = null;
       _minRooms = null;
       _maxRooms = null;
+      _minBathrooms = null;
       _minArea = null;
       _maxArea = null;
+      _postalCodeController.clear();
       _minPriceController.clear();
       _maxPriceController.clear();
       _minAreaController.clear();
@@ -89,12 +101,14 @@ class _FilterPanelState extends State<FilterPanel> {
   void _applyFilters() {
     final filter = SearchFilter(
       city: _selectedCity,
+      postalCode: _postalCode,
       operationType: _operationType,
       propertyType: _propertyType,
       minPrice: _minPrice,
       maxPrice: _maxPrice,
       minRooms: _minRooms,
       maxRooms: _maxRooms,
+      minBathrooms: _minBathrooms,
       minArea: _minArea,
       maxArea: _maxArea,
     );
@@ -133,10 +147,24 @@ class _FilterPanelState extends State<FilterPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _buildSectionTitle('Ubicación'),
+                  TextField(
+                    controller: _postalCodeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Código postal',
+                      hintText: 'Ej: 28001',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      _postalCode = value.isEmpty ? null : value;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedCity,
                     decoration: const InputDecoration(
                       labelText: 'Ciudad',
+                      prefixIcon: Icon(Icons.location_city),
                     ),
                     items: const [
                       DropdownMenuItem(value: null, child: Text('Todas')),
@@ -146,6 +174,9 @@ class _FilterPanelState extends State<FilterPanel> {
                       DropdownMenuItem(
                           value: 'Valencia', child: Text('Valencia')),
                       DropdownMenuItem(value: 'Sevilla', child: Text('Sevilla')),
+                      DropdownMenuItem(value: 'Málaga', child: Text('Málaga')),
+                      DropdownMenuItem(value: 'Zaragoza', child: Text('Zaragoza')),
+                      DropdownMenuItem(value: 'Bilbao', child: Text('Bilbao')),
                     ],
                     onChanged: (value) => setState(() => _selectedCity = value),
                   ),
@@ -246,6 +277,26 @@ class _FilterPanelState extends State<FilterPanel> {
                           label: Text('$rooms+'),
                           selected: _minRooms == rooms,
                           onSelected: (_) => setState(() => _minRooms = rooms),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Baños'),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Todos'),
+                        selected: _minBathrooms == null,
+                        onSelected: (_) => setState(() => _minBathrooms = null),
+                      ),
+                      ...List.generate(4, (index) {
+                        final bathrooms = index + 1;
+                        return ChoiceChip(
+                          label: Text('$bathrooms+'),
+                          selected: _minBathrooms == bathrooms,
+                          onSelected: (_) => setState(() => _minBathrooms = bathrooms),
                         );
                       }),
                     ],

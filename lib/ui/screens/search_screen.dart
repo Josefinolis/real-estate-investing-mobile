@@ -16,9 +16,16 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PropertyBloc(
-        propertyRepository: context.read<PropertyRepository>(),
-      )..add(PropertySearchRequested(initialFilter)),
+      create: (context) {
+        final bloc = PropertyBloc(
+          propertyRepository: context.read<PropertyRepository>(),
+        );
+        // Solo buscar si hay filtros activos
+        if (initialFilter.hasActiveFilters) {
+          bloc.add(PropertySearchRequested(initialFilter));
+        }
+        return bloc;
+      },
       child: SearchScreenContent(initialFilter: initialFilter),
     );
   }
@@ -101,6 +108,41 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
       ),
       body: BlocBuilder<PropertyBloc, PropertyState>(
         builder: (context, state) {
+          // Estado inicial - mostrar mensaje para buscar
+          if (state is PropertyInitial) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aplica filtros para buscar',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Usa el botón de filtros para configurar tu búsqueda',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: _showFilterPanel,
+                    icon: const Icon(Icons.filter_list),
+                    label: const Text('Abrir filtros'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (state is PropertyLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -128,7 +170,6 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
           }
 
           List<Property> properties = [];
-          bool isLoadingMore = false;
           bool hasMore = false;
           int totalElements = 0;
 
@@ -138,7 +179,6 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
             totalElements = state.totalElements;
           } else if (state is PropertyLoadingMore) {
             properties = state.properties;
-            isLoadingMore = true;
             hasMore = true;
           }
 
