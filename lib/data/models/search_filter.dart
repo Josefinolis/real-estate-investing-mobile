@@ -3,6 +3,7 @@ import 'property.dart';
 
 class SearchFilter extends Equatable {
   final String? city;
+  final String? province;
   final String? postalCode;
   final List<String>? zones;
   final OperationType? operationType;
@@ -19,6 +20,7 @@ class SearchFilter extends Equatable {
 
   const SearchFilter({
     this.city,
+    this.province,
     this.postalCode,
     this.zones,
     this.operationType,
@@ -36,6 +38,7 @@ class SearchFilter extends Equatable {
 
   SearchFilter copyWith({
     String? city,
+    String? province,
     String? postalCode,
     List<String>? zones,
     OperationType? operationType,
@@ -52,6 +55,7 @@ class SearchFilter extends Equatable {
   }) {
     return SearchFilter(
       city: city ?? this.city,
+      province: province ?? this.province,
       postalCode: postalCode ?? this.postalCode,
       zones: zones ?? this.zones,
       operationType: operationType ?? this.operationType,
@@ -72,6 +76,7 @@ class SearchFilter extends Equatable {
     final params = <String, dynamic>{};
 
     if (city != null) params['city'] = city;
+    if (province != null) params['province'] = province;
     if (postalCode != null) params['postalCode'] = postalCode;
     if (operationType != null) {
       params['operationType'] = operationType!.name.toUpperCase();
@@ -94,6 +99,7 @@ class SearchFilter extends Equatable {
 
   bool get hasActiveFilters =>
       city != null ||
+      province != null ||
       postalCode != null ||
       operationType != null ||
       propertyType != null ||
@@ -108,6 +114,7 @@ class SearchFilter extends Equatable {
   @override
   List<Object?> get props => [
         city,
+        province,
         postalCode,
         zones,
         operationType,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/location_constants.dart';
 import '../../data/models/property.dart';
 import '../../data/models/search_filter.dart';
 
@@ -17,6 +18,7 @@ class FilterPanel extends StatefulWidget {
 }
 
 class _FilterPanelState extends State<FilterPanel> {
+  late String? _selectedProvince;
   late String? _selectedCity;
   late String? _postalCode;
   late OperationType? _operationType;
@@ -35,9 +37,13 @@ class _FilterPanelState extends State<FilterPanel> {
   final _minAreaController = TextEditingController();
   final _maxAreaController = TextEditingController();
 
+  List<String> get _availableCities =>
+      LocationConstants.getCitiesForProvince(_selectedProvince);
+
   @override
   void initState() {
     super.initState();
+    _selectedProvince = widget.initialFilter.province;
     _selectedCity = widget.initialFilter.city;
     _postalCode = widget.initialFilter.postalCode;
     _operationType = widget.initialFilter.operationType;
@@ -79,6 +85,7 @@ class _FilterPanelState extends State<FilterPanel> {
 
   void _clearFilters() {
     setState(() {
+      _selectedProvince = null;
       _selectedCity = null;
       _postalCode = null;
       _operationType = null;
@@ -101,6 +108,7 @@ class _FilterPanelState extends State<FilterPanel> {
   void _applyFilters() {
     final filter = SearchFilter(
       city: _selectedCity,
+      province: _selectedProvince,
       postalCode: _postalCode,
       operationType: _operationType,
       propertyType: _propertyType,
@@ -147,6 +155,41 @@ class _FilterPanelState extends State<FilterPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _buildSectionTitle('Ubicación'),
+                  DropdownButtonFormField<String>(
+                    value: _selectedProvince,
+                    decoration: const InputDecoration(
+                      labelText: 'Provincia',
+                      prefixIcon: Icon(Icons.map_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Todas las provincias')),
+                      ...LocationConstants.provinces.map((province) =>
+                        DropdownMenuItem(value: province, child: Text(province)),
+                      ),
+                    ],
+                    onChanged: (value) => setState(() {
+                      _selectedProvince = value;
+                      _selectedCity = null; // Reset city when province changes
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedCity,
+                    decoration: const InputDecoration(
+                      labelText: 'Ciudad / Municipio',
+                      prefixIcon: Icon(Icons.location_city),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Todas')),
+                      ..._availableCities.map((city) =>
+                        DropdownMenuItem(value: city, child: Text(city)),
+                      ),
+                    ],
+                    onChanged: _selectedProvince == null
+                        ? null
+                        : (value) => setState(() => _selectedCity = value),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _postalCodeController,
                     decoration: const InputDecoration(
@@ -158,27 +201,6 @@ class _FilterPanelState extends State<FilterPanel> {
                     onChanged: (value) {
                       _postalCode = value.isEmpty ? null : value;
                     },
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCity,
-                    decoration: const InputDecoration(
-                      labelText: 'Ciudad',
-                      prefixIcon: Icon(Icons.location_city),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('Todas')),
-                      DropdownMenuItem(value: 'Madrid', child: Text('Madrid')),
-                      DropdownMenuItem(
-                          value: 'Barcelona', child: Text('Barcelona')),
-                      DropdownMenuItem(
-                          value: 'Valencia', child: Text('Valencia')),
-                      DropdownMenuItem(value: 'Sevilla', child: Text('Sevilla')),
-                      DropdownMenuItem(value: 'Málaga', child: Text('Málaga')),
-                      DropdownMenuItem(value: 'Zaragoza', child: Text('Zaragoza')),
-                      DropdownMenuItem(value: 'Bilbao', child: Text('Bilbao')),
-                    ],
-                    onChanged: (value) => setState(() => _selectedCity = value),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionTitle('Tipo de operación'),

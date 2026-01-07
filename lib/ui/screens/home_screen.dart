@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/property/property_bloc.dart';
+import '../../config/location_constants.dart';
 import '../../data/models/property.dart';
 import '../../data/repositories/property_repository.dart';
 
@@ -30,6 +31,7 @@ class HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<HomeScreenContent> {
   // Filtros
   String? _postalCode;
+  String? _selectedProvince;
   String? _selectedCity;
   OperationType? _selectedOperation;
   PropertyType? _selectedPropertyType;
@@ -60,6 +62,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     // Navegar a búsqueda con los filtros
     final params = <String, String>{};
     if (_postalCode != null) params['postalCode'] = _postalCode!;
+    if (_selectedProvince != null) params['province'] = _selectedProvince!;
     if (_selectedCity != null) params['city'] = _selectedCity!;
     if (_selectedOperation != null) {
       params['operation'] = _selectedOperation == OperationType.venta ? 'VENTA' : 'ALQUILER';
@@ -81,6 +84,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   void _clearFilters() {
     setState(() {
       _postalCode = null;
+      _selectedProvince = null;
       _selectedCity = null;
       _selectedOperation = null;
       _selectedPropertyType = null;
@@ -100,6 +104,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   bool get _hasFilters =>
       _postalCode != null ||
+      _selectedProvince != null ||
       _selectedCity != null ||
       _selectedOperation != null ||
       _selectedPropertyType != null ||
@@ -183,22 +188,38 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              value: _selectedProvince,
+              decoration: const InputDecoration(
+                labelText: 'Provincia',
+                prefixIcon: Icon(Icons.map_outlined),
+              ),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('Todas las provincias')),
+                ...LocationConstants.provinces.map((province) =>
+                  DropdownMenuItem(value: province, child: Text(province)),
+                ),
+              ],
+              onChanged: (value) => setState(() {
+                _selectedProvince = value;
+                _selectedCity = null; // Reset city when province changes
+              }),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
               value: _selectedCity,
               decoration: const InputDecoration(
-                labelText: 'Ciudad',
+                labelText: 'Ciudad / Municipio',
                 prefixIcon: Icon(Icons.location_city),
               ),
-              items: const [
-                DropdownMenuItem(value: null, child: Text('Todas las ciudades')),
-                DropdownMenuItem(value: 'Madrid', child: Text('Madrid')),
-                DropdownMenuItem(value: 'Barcelona', child: Text('Barcelona')),
-                DropdownMenuItem(value: 'Valencia', child: Text('Valencia')),
-                DropdownMenuItem(value: 'Sevilla', child: Text('Sevilla')),
-                DropdownMenuItem(value: 'Málaga', child: Text('Málaga')),
-                DropdownMenuItem(value: 'Zaragoza', child: Text('Zaragoza')),
-                DropdownMenuItem(value: 'Bilbao', child: Text('Bilbao')),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('Todas')),
+                ...LocationConstants.getCitiesForProvince(_selectedProvince).map((city) =>
+                  DropdownMenuItem(value: city, child: Text(city)),
+                ),
               ],
-              onChanged: (value) => setState(() => _selectedCity = value),
+              onChanged: _selectedProvince == null
+                  ? null
+                  : (value) => setState(() => _selectedCity = value),
             ),
             const SizedBox(height: 24),
 

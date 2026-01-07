@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/scraper/scraper_bloc.dart';
+import '../../config/location_constants.dart';
 import '../../data/models/scraper_config.dart';
 import '../../data/repositories/scraper_repository.dart';
 
@@ -288,8 +289,8 @@ class _ScraperConfigScreenContentState
           ),
           const SizedBox(height: 24),
 
-          // Ciudades
-          _buildSectionTitle(context, 'Ciudades'),
+          // Ciudades / Municipios
+          _buildSectionTitle(context, 'Ciudades / Municipios'),
           const SizedBox(height: 12),
           _buildCitiesSelector(availableCities),
           const SizedBox(height: 24),
@@ -484,41 +485,86 @@ class _ScraperConfigScreenContentState
   }
 
   Widget _buildCitiesSelector(List<String> availableCities) {
-    final cities = availableCities.isNotEmpty ? availableCities : _selectedCities;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_selectedCities.length} ciudades seleccionadas',
+          '${_selectedCities.length} ciudades/municipios seleccionados',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         Container(
-          constraints: const BoxConstraints(maxHeight: 200),
+          constraints: const BoxConstraints(maxHeight: 300),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: cities.length,
+            itemCount: LocationConstants.provinces.length,
             itemBuilder: (context, index) {
-              final city = cities[index];
-              final isSelected = _selectedCities.contains(city);
-              return CheckboxListTile(
-                title: Text(city),
-                value: isSelected,
-                dense: true,
-                onChanged: (selected) {
-                  setState(() {
-                    if (selected == true) {
-                      _selectedCities.add(city);
-                    } else {
-                      _selectedCities.remove(city);
-                    }
-                  });
-                },
+              final province = LocationConstants.provinces[index];
+              final cities = LocationConstants.getCitiesForProvince(province);
+              final selectedInProvince = cities.where((c) => _selectedCities.contains(c)).length;
+              final allSelected = selectedInProvince == cities.length;
+              final someSelected = selectedInProvince > 0 && !allSelected;
+
+              return ExpansionTile(
+                title: Text(province),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (selectedInProvince > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$selectedInProvince',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    Checkbox(
+                      value: allSelected ? true : (someSelected ? null : false),
+                      tristate: true,
+                      onChanged: (value) {
+                        setState(() {
+                          if (allSelected) {
+                            _selectedCities.removeWhere((c) => cities.contains(c));
+                          } else {
+                            for (final city in cities) {
+                              if (!_selectedCities.contains(city)) {
+                                _selectedCities.add(city);
+                              }
+                            }
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                children: cities.map((city) {
+                  final isSelected = _selectedCities.contains(city);
+                  return CheckboxListTile(
+                    title: Text(city),
+                    value: isSelected,
+                    dense: true,
+                    onChanged: (selected) {
+                      setState(() {
+                        if (selected == true) {
+                          _selectedCities.add(city);
+                        } else {
+                          _selectedCities.remove(city);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
               );
             },
           ),
@@ -527,7 +573,7 @@ class _ScraperConfigScreenContentState
         Row(
           children: [
             TextButton(
-              onPressed: () => setState(() => _selectedCities = List.from(cities)),
+              onPressed: () => setState(() => _selectedCities = List.from(LocationConstants.allCities)),
               child: const Text('Seleccionar todas'),
             ),
             TextButton(

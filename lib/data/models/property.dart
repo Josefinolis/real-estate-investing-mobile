@@ -31,6 +31,7 @@ class Property extends Equatable {
   final double? areaM2;
   final String? address;
   final String? city;
+  final String? province;
   final String? zone;
   final double? latitude;
   final double? longitude;
@@ -55,6 +56,7 @@ class Property extends Equatable {
     this.areaM2,
     this.address,
     this.city,
+    this.province,
     this.zone,
     this.latitude,
     this.longitude,
@@ -98,6 +100,7 @@ class Property extends Equatable {
       areaM2: (json['areaM2'] as num?)?.toDouble(),
       address: json['address'] as String?,
       city: json['city'] as String?,
+      province: json['province'] as String?,
       zone: json['zone'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
@@ -127,6 +130,7 @@ class Property extends Equatable {
       'areaM2': areaM2,
       'address': address,
       'city': city,
+      'province': province,
       'zone': zone,
       'latitude': latitude,
       'longitude': longitude,
